@@ -5,9 +5,9 @@ MPU6050 mpu(Wire);
 unsigned long previous_time = 0;  // Timer to calculate delta time
 
 // PID Constants (Tune these for best performance)
-float Kp = 65;
-float Ki = 40;
-float Kd = 0.03;
+float Kp = 100;
+float Ki = 15;
+float Kd = 0;
 
 float setpoint = 0;  // Desired pitch angle (robot balanced at 0°)
 float previous_error = 0.0;
@@ -31,8 +31,8 @@ void setup() {
   Serial.println(status);
   while (status != 0) {} // Stop if MPU6050 not connected
 
-  mpu.setAccOffsets(-0.08,-0.02,-0.09);
-  mpu.setGyroOffsets(0.07, 0.09, -1.07);
+  mpu.setAccOffsets(0.05,-0.01,-0.08);
+  mpu.setGyroOffsets(0.19, 0.94, -0.90);
   Serial.println("IMU Ready!\n");
 
   // Initialize Motor Pins
@@ -88,9 +88,17 @@ void loop() {
   unsigned long current_time = millis();
   float dt = (current_time - previous_time) / 1000.0;  // Time in seconds
 
+//   Serial.print("X: ");
+// Serial.print(mpu.getAngleX());
+// Serial.print("  Y: ");
+// Serial.print(mpu.getAngleY());
+// Serial.print("  Z: ");
+// Serial.println(mpu.getAngleZ());
+
+
   if (dt >= 0.01) {  // Run every 10ms
 
-    float pitch = -mpu.getAngleX();  // Use Y-axis as pitch
+    float pitch = mpu.getAngleY();  // Use Y-axis as pitch
 
     // Calculate PID
     float error = setpoint - pitch;
