@@ -7,11 +7,13 @@ unsigned long previous_time = 0;  // Timer to calculate delta time
 // PID Constants (Tune these for best performance)
 float Kp = 100;
 float Ki = 15;
-float Kd = 0;
+float Kd = 0.0;
 
 float setpoint = 0;  // Desired pitch angle (robot balanced at 0°)
 float previous_error = 0.0;
 float integral = 0.0;
+
+float forward_offset = 0.8; // Tilt target forward by _°, adjust for speed
 
 // Motor Driver Pins (L298)
 #define ENA 9  // Left Motor Speed (PWM)
@@ -100,8 +102,10 @@ void loop() {
 
     float pitch = mpu.getAngleY();  // Use Y-axis as pitch
 
+     float target = setpoint + forward_offset;
+
     // Calculate PID
-    float error = setpoint - pitch;
+    float error = target - pitch;
     integral += error * dt;  // dt = 10ms = 0.01s
     float derivative = (error - previous_error) / dt;
     float PID_value = (Kp * error) + (Ki * integral) + (Kd * derivative);
