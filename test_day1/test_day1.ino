@@ -5,8 +5,8 @@ MPU6050 mpu(Wire);
 unsigned long previous_time = 0;  // Timer to calculate delta time
 
 // PID Constants (Tune these for best performance)
-float Kp = 60;
-float Ki = 45;
+float Kp = 65;
+float Ki = 40;
 float Kd = 0.03;
 
 float setpoint = 0;  // Desired pitch angle (robot balanced at 0°)
@@ -18,8 +18,8 @@ float integral = 0.0;
 #define IN1 5    // Left Motor Direction
 #define IN2 6
 #define ENB 10    // Right Motor Speed (PWM)
-#define IN3 7    // Right Motor Direction
-#define IN4 8
+#define IN3 8    // Right Motor Direction
+#define IN4 7
 
 void setup() {
   Serial.begin(9600);
@@ -53,38 +53,6 @@ void setup() {
 
 }
 
-void loop() {
-  mpu.update();  // Read sensor values and update angles
-
-  unsigned long current_time = millis();
-  float dt = (current_time - previous_time) / 1000.0;  // Time in seconds
-
-  if (dt >= 0.01) {  // Run every 10ms
-
-    float pitch = mpu.getAngleY();  // Use Y-axis as pitch
-
-    // Calculate PID
-    float error = setpoint - pitch;
-    integral += error * dt;  // dt = 10ms = 0.01s
-    float derivative = (error - previous_error) / dt;
-    float PID_value = (Kp * error) + (Ki * integral) + (Kd * derivative);
-    previous_error = error;
-
-    // Limit PID output
-    if (PID_value > 255) PID_value = 255;
-    if (PID_value < -255) PID_value = -255;
-
-    // Optional: Stop if bot tilts too far
-    if (abs(pitch) > 45) {
-      stopMotors();
-    } else {
-      driveMotors(PID_value);  // Control motors based on PID output
-    }
-
-    previous_time = current_time;  // Update time
-  }
-  delay(25);
-}
 
 // Function to control motors with L298
 void driveMotors(float PID_value) {
@@ -113,6 +81,40 @@ void driveMotors(float PID_value) {
     digitalWrite(IN4, LOW);
   }
 }
+
+void loop() {
+  mpu.update();  // Read sensor values and update angles
+
+  unsigned long current_time = millis();
+  float dt = (current_time - previous_time) / 1000.0;  // Time in seconds
+
+  if (dt >= 0.01) {  // Run every 10ms
+
+    float pitch = -mpu.getAngleX();  // Use Y-axis as pitch
+
+    // Calculate PID
+    float error = setpoint - pitch;
+    integral += error * dt;  // dt = 10ms = 0.01s
+    float derivative = (error - previous_error) / dt;
+    float PID_value = (Kp * error) + (Ki * integral) + (Kd * derivative);
+    previous_error = error;
+
+    // Limit PID output
+    if (PID_value > 255) PID_value = 255;
+    if (PID_value < -255) PID_value = -255;
+
+    // Optional: Stop if bot tilts too far
+    if (abs(pitch) > 45) {
+      stopMotors();
+    } else {
+      driveMotors(PID_value);  // Control motors based on PID output
+    }
+
+    previous_time = current_time;  // Update time
+  }
+  delay(25);
+}
+
 
 // Function to stop both motors
 void stopMotors() {
